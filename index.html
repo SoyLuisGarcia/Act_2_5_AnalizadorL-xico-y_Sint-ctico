@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANALIZADOR</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+        }
+        .container {
+            max-width: 1000px; /* Aumentado el ancho máximo del contenedor */
+            margin: 40px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-weight: 500;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #d81313;
+            font-size: 20px;
+        }
+        .flex-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .lexico, .sintactico {
+            width: 100%; /* Ajusta el ancho para que ocupe más espacio horizontal */
+            padding: 20px;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%; /* Hacemos que las áreas de texto ocupen todo el ancho disponible */
+            height: 250px; /* Incrementa la altura de las áreas de texto */
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #bdc3c7;
+            margin-top: 10px;
+            font-family: 'Poppins', sans-serif;
+        }
+        button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .contenedor_tabla {
+            margin-top: 20px;
+            text-align: left;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #e0e0e0;
+        }
+        input[type="file"] {
+            margin-top: 20px;
+            display: block;
+        }
+        .text-center {
+            margin-top: 30px;
+            font-size: 18px;
+            color: #2c3e50;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ANALIZADOR LÉXICO Y SINTÁCTICO</h1>
+        <form method="POST" action="/" enctype="multipart/form-data">
+            <div class="flex-container">
+                <div class="lexico">
+                    <h2>ANALIZADOR LÉXICO</h2>
+                    <textarea id="lexico_result" readonly placeholder="Análisis del léxico">{{ lexico_result }}</textarea>
+                    <button type="submit" name="lexico_button">Analizar Léxico</button>
+                </div>
+
+                <div class="sintactico">
+                    <h2>ANALIZADOR SINTÁCTICO</h2>
+                    <textarea id="sintactico_result" readonly placeholder="Análisis del sintáctico">{{ sintactico_result }}</textarea>
+                    <button type="submit" name="sintactico_button">Analizar Sintáctico</button>
+                </div>
+            </div>
+            <div class="contenedor_tabla">
+                <h2>Conteo de tokens</h2>
+                <table>
+                    <tr>
+                        <th>Tokens</th>
+                        <th>Cantidad</th>
+                    </tr>
+                    {% for category, count in counts.items() %}
+                        <tr>
+                            <td>{{ category }}</td>
+                            <td>{{ count }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+                <button type="submit" name="clear_counters">Eliminar Conteo de Tokens</button>
+            </div>
+            
+            <div class="contenedor_tabla">
+                <h2>Conteo de tokens</h2>
+                <table>
+                    <tr>
+                        <th>Token</th>
+                        <th>Tipo</th>
+                    </tr>
+                    <!-- Aquí iteramos sobre la lista de tokens y mostramos cada uno -->
+                    {% for token_info in tokens_info %}
+                        <tr>
+                            <td>{{ token_info.token }}</td>
+                            <td>{{ token_info.tipo }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+                <button type="submit" name="clear_counters">Eliminar Conteo de Tokens</button>
+            </div>
+            
+            <input type="file" name="file" id="file" accept=".txt" onchange="loadFile(event)" value="Subir archivo">
+            <h2 class="text-center">POR FAVOR DE INGRESAR SU CÓDIGO O ARCHIVO TXT.</h2>
+            <textarea id="codigo_fuente" name="ingreso" placeholder="Introduce el texto o sube un archivo"></textarea>
+            <button type="button" onclick="limpiarTexto()">Eliminar código o archivo txt.</button>
+        </form>
+    </div>
+
+    <script>
+        // Función para cargar el archivo de texto seleccionado
+        function loadFile(event) {
+            var input = event.target;
+            var reader = new FileReader();
+            reader.onload = function(){
+                var text = reader.result;
+                document.getElementById('codigo_fuente').value = text;
+                localStorage.setItem('codigo_fuente', text);
+            };
+            reader.readAsText(input.files[0]);
+        };
+
+        function limpiarTexto() {
+            document.getElementById('codigo_fuente').value = '';
+            document.getElementById('lexico_result').value = '';
+            document.getElementById('sintactico_result').value = '';
+            localStorage.removeItem('codigo_fuente');
+            localStorage.removeItem('lexico_result');
+            localStorage.removeItem('sintactico_result');
+        }
+
+        window.onload = function() {
+            var storedText = localStorage.getItem('codigo_fuente');
+            if (storedText !== null) {
+                document.getElementById('codigo_fuente').value = storedText;
+            }
+        };
+
+        document.getElementById('codigo_fuente').addEventListener('input', function() {
+            var editedText = this.value;
+            localStorage.setItem('codigo_fuente', editedText);
+        });
+    </script>
+</body>
+</html>
